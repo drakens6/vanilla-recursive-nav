@@ -1,0 +1,132 @@
+<html>
+    <div id="navigation"></div>
+</html>
+
+<style>
+
+.nm-dropdown{
+    display: none;
+}
+
+.show {
+    display: inline !important;
+}
+</style>
+
+<script>
+//Mock Data
+const props = {
+    menu: [
+      {
+        title: "Page 1",
+        href: "#"
+      },
+      {
+        title: "Page 2",
+        href: "#2",
+        sublinks: [
+          {
+            title: "Depth 2 Link 1",
+            href: "#3",
+            sublinks: [
+              {
+                title: "Depth 3 Link 1",
+                href: "#4"
+              }
+            ]
+          },
+          {
+            title: "Depth 2 Link 2",
+            href: "#3",
+            sublinks: [
+              {
+                title: "Depth 3 Link 2",
+                href: "#4"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Disabled Page",
+        href: "#5"
+      },
+      {
+        title: "Page 3",
+        href: "#6"
+      }
+    ],
+    currentPage: "Page 2",
+    disabledPages: [
+      "Disabled Page"
+    ]
+};
+
+let currentPage = null;
+let html = null
+const setNav = (item, depth) => {
+    currentPage = findWithPath(item, props.menu)
+    attachAndBind()
+}
+const RecursiveNavRow = ({item, depth = 1, arrayIndex}) => {    
+    const isExpanded = (currentPage ? currentPage[depth - 1] === arrayIndex : false)
+    const isHidden = (depth === 1 || isExpanded)
+    return `
+      <div class="nm-dropdown nm-dropdown-${depth}">
+        <div>${isExpanded?"▼" : "►"}<a  style="${'margin-left:' + (25 * depth) + "px;padding-top:0"}" href="${item.href}" data-depth="${depth}" class="" href="${item.href}">${item.title}</a>
+          ${item.sublinks ? item.sublinks.map((sublink, index) => {
+          return `
+            ${RecursiveNavRow({item:sublink, depth: depth + 1, arrayIndex: index})}
+            `
+            }).join('') : ""}
+        </div>
+        
+     </div>
+    `
+  }
+  
+const NavigationalModel = ({ menu }) => {  
+    return `
+      <div id="nm-main-nav">
+        <hr class="nm-divider" />
+        ${menu?.map((item, index) => {
+         return `
+          <div class="nm-dropdown-0">
+            ${
+              `<a data-depth="0" href="${item.href}">${item.title}</a>`
+            }
+            ${item.sublinks ? item.sublinks?.map((sublink, index) => {
+              return RecursiveNavRow({item:sublink, array:menu, arrayIndex: index })
+            }).join('') : ""}
+            <hr class="nm-divider" />
+         </div>
+         `
+        }).join('')}
+      </div>
+    `
+  }
+const attachAndBind = () => {
+    html = NavigationalModel(props)
+    let currentDepth = 0
+    document.getElementById('navigation').innerHTML = html
+    document.getElementById('nm-main-nav').addEventListener('click', (e) => {
+        if ('depth' in e.target.dataset) {
+          
+            let elem = document.getElementsByClassName('nm-dropdown-' + e.target.dataset.depth)
+            currentDepth = e.target.dataset.depth
+            Array.from(elem).map((item) => {
+                let group = item.parentNode.getElementsByClassName('nm-dropdown-' + (Number(e.target.dataset.depth) + Number(1)))
+                Array.from(group).map((it2) => {
+                    it2.classList.toggle("show")
+                })
+            })
+            let set2 = Array.from(e.target.parentNode.getElementsByClassName('nm-dropdown-' + (Number(e.target.dataset.depth) + Number(1))))
+            set2.map((it3) => {
+                it3.classList.toggle("show")
+            })
+        }
+    })
+    
+}
+attachAndBind()
+</script>
